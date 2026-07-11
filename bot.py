@@ -9,10 +9,11 @@ from telegram.ext import (
     filters,
 )
 
-from config import TELEGRAM_BOT_TOKEN
 from handlers.text_handler import handle_text
 from handlers.document_handler import handle_document
 from handlers.voice_handler import handle_voice
+
+from config import TELEGRAM_BOT_TOKEN, LLM_PROVIDER, OPENAI_MODEL, ANTHROPIC_MODEL, WHISPER_MODEL_SIZE
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -46,13 +47,49 @@ HELP_MESSAGE = (
     "Команды:\n"
     "/start — начать\n"
     "/help — эта справка\n"
+    "/about — о проекте\n"
+    "/mode — текущие настройки суммаризации"
 )
+
+ABOUT_MESSAGE = (
+    "🤖 Конспект-бот\n\n"
+    "Кейсовый проект для программы «Технологии искусственного "
+    "и дополненного интеллекта».\n\n"
+    "Технологии: python-telegram-bot, faster-whisper, sumy/TextRank, "
+    "опционально OpenAI/Anthropic API.\n\n"
+    "Исходный код:\n"
+    "https://github.com/Mikka-mokka/NeimarkCase_Synopsis_Telegram-bot"
+)
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(START_MESSAGE)
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(HELP_MESSAGE)
+
+
+async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(ABOUT_MESSAGE)
+
+
+async def mode(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if LLM_PROVIDER == "openai":
+        summarizer_info = f"LLM (OpenAI, модель {OPENAI_MODEL})"
+    elif LLM_PROVIDER == "anthropic":
+        summarizer_info = f"LLM (Anthropic, модель {ANTHROPIC_MODEL})"
+    else:
+        summarizer_info = "локальный алгоритм TextRank (без внешних API)"
+
+    text = (
+        f"⚙️ Текущие настройки:\n\n"
+        f"Суммаризация: {summarizer_info}\n"
+        f"Распознавание речи: faster-whisper, модель \"{WHISPER_MODEL_SIZE}\""
+    )
+    await update.message.reply_text(text)
+
+
 
 #Глобальный обраточик ошибок
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -73,7 +110,9 @@ def build_application() -> Application:
 
     #Какая функция вызывается для какого типа сообщения
     app.add_handler(CommandHandler("start", start)) #команда /start
-    app.add_handler(CommandHandler("help", help_command)) #команда /help
+    app.add_handler(CommandHandler("help", help)) #команда /help
+    app.add_handler(CommandHandler("about", about)) #команда /about
+    app.add_handler(CommandHandler("mode", mode)) #команда /mode
 
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text)) #текст и не команда - handle_text
     app.add_handler(MessageHandler(filters.Document.ALL, handle_document)) #все документы - handle_document
