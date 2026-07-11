@@ -22,16 +22,37 @@ logger = logging.getLogger(__name__)
 
 START_MESSAGE = (
     "Привет! Я делаю краткие конспекты 📝\n\n"
-    "Пришли мне:\n"
-    "• текст\n"
-    "• голосовое или аудиосообщение\n"
-    "• файл .txt, .docx или .pdf\n\n"
-    "И я верну краткую выжимку ключевых идей."
+    "Пришли мне текст, голосовое сообщение или файл (.txt/.docx/.pdf) — "
+    "и я верну структурированную выжимку ключевых идей.\n\n"
+    "Все форматы и подробности — команда /help"
 )
 
+HELP_MESSAGE = (
+    "Что я умею:\n\n"
+    "📄 Файлы — пришли .txt, .docx или .pdf, верну конспект.\n"
+    "🎙 Голосовые и аудио — пришли voice-сообщение или аудиофайл, "
+    "сначала распознаю речь, потом сделаю конспект.\n"
+    "💬 Текст — просто напиши или перешли сообщение.\n"
+    "📨 Пересылка — переслай сообщение из любого чата, обработаю как обычный текст.\n\n"
+    "Как выглядит конспект (только для режима LLM):\n"
+    "• Основные идеи\n"
+    "• Технические детали и практические нюансы\n"
+    "• Риски и ограничения\n"
+    "• Вывод\n\n"
+    "Ограничения:\n"
+    "- Максимум ~60000 символов текста за раз\n"
+    "- Сканы PDF без текстового слоя не распознаются\n"
+    "- Кружочки (video note) пока не поддерживаются\n\n"
+    "Команды:\n"
+    "/start — начать\n"
+    "/help — эта справка\n"
+)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(START_MESSAGE)
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(HELP_MESSAGE)
 
 #Глобальный обраточик ошибок
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -52,7 +73,7 @@ def build_application() -> Application:
 
     #Какая функция вызывается для какого типа сообщения
     app.add_handler(CommandHandler("start", start)) #команда /start
-    app.add_handler(CommandHandler("help", start)) #команда /help
+    app.add_handler(CommandHandler("help", help_command)) #команда /help
 
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text)) #текст и не команда - handle_text
     app.add_handler(MessageHandler(filters.Document.ALL, handle_document)) #все документы - handle_document
