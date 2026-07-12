@@ -21,6 +21,7 @@ from config import (
     ANTHROPIC_API_KEY,
     ANTHROPIC_MODEL,
     CHUNK_SIZE_CHARS,
+    OPENAI_BASE_URL
 )
 
 logger = logging.getLogger(__name__)
@@ -79,7 +80,7 @@ def _split_into_chunks(text: str, chunk_size: int = CHUNK_SIZE_CHARS) -> list[st
 def _call_openai(prompt: str) -> str:
     from openai import OpenAI
 
-    client = OpenAI(api_key=OPENAI_API_KEY)
+    client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
     response = client.chat.completions.create(
         model=OPENAI_MODEL,
         messages=[{"role": "user", "content": prompt}],
