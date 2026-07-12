@@ -6,10 +6,11 @@ import uuid
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from config import TMP_DIR
+from config import TMP_DIR, MAX_DOCUMENT_SIZE_MB
 from services.extractors import extract_text
 from services.summarizer import summarize_text
 from utils.text_utils import reply_with_optional_markdown
+from utils.rate_limiter import check_rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,12 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     message = update.message
     document = message.document
 
-    _, extension = os.path.splitext(document.file_name or "")  #узнаем расширение
+    wait_seconds = check_rate_limit(update.effective_user.id)
+    if wait_seconds is not None:
+        await message.reply_text(f"⏳ Слишком часто. Подожди ещё {wait_seconds:.0f} сек.")
+        return
+
+    _, extension = os.path.splitext(document.file_name or "")
     extension = extension.lower()
 
     if extension not in SUPPORTED_EXTENSIONS:
@@ -30,8 +36,17 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
         return
 
+    max_bytes = MAX_DOCUMENT_SIZE_MB * 1024 * 1024
+    if document.file_size and document.file_size > max_bytes:
+        await message.reply_text(
+            f"Файл слишком большой ({document.file_size / 1024 / 1024:.1f} МБ). "
+            f"Максимум — {MAX_DOCUMENT_SIZE_MB} МБ."
+        )
+        return
+
+
     os.makedirs(TMP_DIR, exist_ok=True) #Создаём папку для временных файлов, если её ещё нет
-    local_path = os.path.join(TMP_DIR, f"{uuid.uuid4().hex}{extension}")    #Генерируем случайный уникальный идентификатор
+    local_path = os.path.join(TMP_DIR, f"{uuid.uuid4().hex}{extension}") #Генерируем случайный уникальный идентификатор
 
     await message.reply_chat_action("typing")
     tg_file = await document.get_file()

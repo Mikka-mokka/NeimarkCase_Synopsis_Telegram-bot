@@ -6,10 +6,11 @@ import uuid
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from config import TMP_DIR
+from config import TMP_DIR, MAX_VOICE_SIZE_MB
 from services.transcriber import transcribe_audio
 from services.summarizer import summarize_text
 from utils.text_utils import reply_with_optional_markdown
+from utils.rate_limiter import check_rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,20 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     if audio_obj is None:
         return
+
+    wait_seconds = check_rate_limit(update.effective_user.id)
+    if wait_seconds is not None:
+        await message.reply_text(f"⏳ Слишком часто. Подожди ещё {wait_seconds:.0f} сек.")
+        return
+
+    max_bytes = MAX_VOICE_SIZE_MB * 1024 * 1024
+    if audio_obj.file_size and audio_obj.file_size > max_bytes:
+        await message.reply_text(
+            f"Аудио слишком большое ({audio_obj.file_size / 1024 / 1024:.1f} МБ). "
+            f"Максимум — {MAX_VOICE_SIZE_MB} МБ."
+        )
+        return
+
 
     os.makedirs(TMP_DIR, exist_ok=True)
     local_path = os.path.join(TMP_DIR, f"{uuid.uuid4().hex}.ogg")

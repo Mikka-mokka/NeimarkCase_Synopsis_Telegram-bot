@@ -35,3 +35,11 @@ CHUNK_SIZE_CHARS = int(os.getenv("CHUNK_SIZE_CHARS", "4000"))
 
 # Папка для временных файлов (аудио, документы)
 TMP_DIR = os.getenv("TMP_DIR", "tmp_files")
+
+# Максимальный размер файла, который бот согласится скачать и обработать (в МБ)
+MAX_DOCUMENT_SIZE_MB = int(os.getenv("MAX_DOCUMENT_SIZE_MB", "20"))
+MAX_VOICE_SIZE_MB = int(os.getenv("MAX_VOICE_SIZE_MB", "20"))
+
+# Минимальный интервал между сообщениями одного пользователя (в секундах).
+# Защищает от спама и от лишних трат на LLM API при случайных повторных отправках.
+RATE_LIMIT_SECONDS = float(os.getenv("RATE_LIMIT_SECONDS", "3"))
