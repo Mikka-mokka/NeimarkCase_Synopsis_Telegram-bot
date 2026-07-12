@@ -23,6 +23,23 @@ def split_for_telegram(text: str, limit: int = TELEGRAM_MAX_MESSAGE_LEN) -> list
     return parts
 
 
+async def reply_with_optional_markdown(message, text: str) -> None:
+    """
+    Отправляет текст с Markdown-разметкой (жирные слова через *звёздочки*).
+    Если Telegram не может распарсить разметку (например, в тексте случайно
+    оказались незакрытые * _ ` [ ),
+    отправляет тот же текст обычным сообщением, чтобы ответ не терялся
+    из-за ошибки форматирования.
+    """
+    from telegram.error import BadRequest
+
+    for part in split_for_telegram(text):
+        try:
+            await message.reply_text(part, parse_mode="Markdown")
+        except BadRequest:
+            await message.reply_text(part)
+
+
 def extract_forwarded_text(message) -> str | None:
     """
     Если сообщение переслано (forwarded) и содержит текст — возвращаем его.

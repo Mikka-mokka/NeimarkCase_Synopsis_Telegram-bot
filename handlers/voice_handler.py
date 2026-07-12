@@ -1,4 +1,4 @@
-"""Обработка голосовых сообщений (voice) и аудиофайлов (audio)"""
+"""Обработка голосовых сообщений (voice) и аудиофайлов (audio)."""
 import logging
 import os
 import uuid
@@ -9,7 +9,7 @@ from telegram.ext import ContextTypes
 from config import TMP_DIR
 from services.transcriber import transcribe_audio
 from services.summarizer import summarize_text
-from utils.text_utils import split_for_telegram
+from utils.text_utils import reply_with_optional_markdown
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +37,8 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             return
 
         summary = summarize_text(transcript)
-        reply = (
-            f"🎧 Расшифровка:\n{transcript}\n\n"
-            f"📝 Конспект:\n\n{summary}"
-        )
-        for part in split_for_telegram(reply):
-            await message.reply_text(part)
+        await message.reply_text(f"🎧 Расшифровка:\n{transcript}")
+        await reply_with_optional_markdown(message, f"📝 Конспект:\n\n{summary}")
 
     except Exception:
         logger.exception("Ошибка обработки аудио")

@@ -6,10 +6,10 @@ import uuid
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from config import TMP_DIR, MAX_INPUT_CHARS
+from config import TMP_DIR
 from services.extractors import extract_text
 from services.summarizer import summarize_text
-from utils.text_utils import split_for_telegram
+from utils.text_utils import reply_with_optional_markdown
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +34,8 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     local_path = os.path.join(TMP_DIR, f"{uuid.uuid4().hex}{extension}")    #Генерируем случайный уникальный идентификатор
 
     await message.reply_chat_action("typing")
-    tg_file = await document.get_file() #запрашивает у Telegram служебную информацию о файле
-    await tg_file.download_to_drive(local_path) #Скачиваем сам файл на диск бота по сгенерированному пути.
+    tg_file = await document.get_file()
+    await tg_file.download_to_drive(local_path)
 
     try:
         text = extract_text(local_path, extension)
@@ -49,8 +49,7 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
         summary = summarize_text(text)
         reply = f"📄 Конспект файла «{document.file_name}»:\n\n{summary}"
-        for part in split_for_telegram(reply):
-            await message.reply_text(part)
+        await reply_with_optional_markdown(message, reply)
 
     except Exception:
         logger.exception("Ошибка обработки документа")
