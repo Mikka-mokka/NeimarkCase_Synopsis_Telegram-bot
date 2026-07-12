@@ -21,7 +21,8 @@ from config import (
     ANTHROPIC_API_KEY,
     ANTHROPIC_MODEL,
     CHUNK_SIZE_CHARS,
-    OPENAI_BASE_URL
+    OPENAI_BASE_URL,
+    ANTHROPIC_BASE_URL 
 )
 
 logger = logging.getLogger(__name__)
@@ -114,7 +115,7 @@ def _call_openai(prompt: str) -> str:
 def _call_anthropic(prompt: str) -> str:
     import anthropic
 
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY, base_url=ANTHROPIC_BASE_URL)
     message = client.messages.create(
         model=ANTHROPIC_MODEL,
         max_tokens=2000,

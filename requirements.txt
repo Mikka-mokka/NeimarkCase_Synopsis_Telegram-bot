@@ -6,3 +6,4 @@ faster-whisper==1.2.1
 sumy==0.12.0
 nltk==3.10.0
 openai==2.45.0
+anthropic==0.116.0
