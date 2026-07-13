@@ -18,11 +18,11 @@ from config import (
     LLM_PROVIDER,
     OPENAI_API_KEY,
     OPENAI_MODEL,
+    OPENAI_BASE_URL,
     ANTHROPIC_API_KEY,
     ANTHROPIC_MODEL,
+    ANTHROPIC_BASE_URL,
     CHUNK_SIZE_CHARS,
-    OPENAI_BASE_URL,
-    ANTHROPIC_BASE_URL 
 )
 
 logger = logging.getLogger(__name__)
@@ -148,12 +148,31 @@ def _merge_with_llm(partial_summaries: list[str]) -> str:
     return _call_llm(prompt)
 
 
+def _ensure_nltk_data() -> None:
+    """
+    sumy использует токенизатор предложений из библиотеки nltk, а nltk не
+    скачивает свои языковые данные (punkt) автоматически при `pip install`.
+    Без них Tokenizer("russian") падает с LookupError. Проверяем, есть ли
+    данные на диске, и докачиваем при необходимости — один раз, при первом
+    реальном обращении к локальной суммаризации.
+    """
+    import nltk
+
+    for resource in ("tokenizers/punkt", "tokenizers/punkt_tab"):
+        try:
+            nltk.data.find(resource)
+        except LookupError:
+            nltk.download(resource.split("/")[-1], quiet=True)
+
+
 def _summarize_local(text: str, sentences_count: int = 5) -> str:
     """
     Экстрактивная суммаризация без внешних API: алгоритм TextRank
     из библиотеки sumy. Выбирает наиболее "весомые" предложения исходного
     текста — это не пересказ своими словами, а выжимка ключевых фраз.
     """
+    _ensure_nltk_data()
+
     from sumy.parsers.plaintext import PlaintextParser
     from sumy.nlp.tokenizers import Tokenizer
     from sumy.summarizers.text_rank import TextRankSummarizer
