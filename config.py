@@ -6,7 +6,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv() #читает файл .env в корне проекта и подставляет его строки (ПЕРЕМЕННАЯ=значение) 
 
 # Токен телеграм-бота, выдаёт @BotFather
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")

@@ -22,7 +22,7 @@ def extract_from_txt(path: str) -> str:
 
 
 def extract_from_docx(path: str) -> str:
-    """Извлекает текст из .docx (абзацы + таблицы)"""
+    """Извлекает текст из .docx"""
     from docx import Document
 
     doc = Document(path)
